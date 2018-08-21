@@ -68,14 +68,14 @@ temperature = temperature * 9/5.0 + 32
 # #################################################
 
 
-templow = 57
+templow = 58
 temphigh = 60
 
-humlow = 70
-humhigh = 75
+humlow = 75
+humhigh = 90
 
 fridgepin = 26
-humpin = 19
+humpin = 17
 # now if we are above temphigh, turn on the fridge pin
 # we are just going to turn it on until we hit the threshold then for a littl elonger
 # hoping we can rely on the thermal mass of the fridge to keep it constant
@@ -92,7 +92,7 @@ fridgeON = 0
 humidityON = 0
 
 # start control loop
-while True:
+for x in range(30):
     humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)    
     
     # convert to fh
@@ -102,38 +102,48 @@ while True:
     if (temperature > temphigh):
         GPIO.output(fridgepin,GPIO.HIGH) # turn on fridgepin
         fridgeON = 1
+        print("fridge on")
     elif temperature < templow:
-        GPIO.output(fridgepin,GPIO.LOW) # if the temp is too low, turn the fridge off
+        GPIO.output(fridgepin,GPIO.LOW) # if the temp is too low, turn the fridge ofj
         fridgeON = 0
+        print("fridge off")
     # do the same for humidity
 
     if (humidity >humhigh):
-        GPIO.output(humpin,GPIO.LOW) # turn off humidity
+        GPIO.output(humpin,GPIO.HIGH) # turn off humidity
         humidityON = 0
+        print("humidity off")
     elif humidity< humlow:
-        GPIO.output(humpin,GPIO.HIGH) # turn on humidity
+        GPIO.output(humpin,GPIO.LOW) # turn on humidity
         humidityON = 1
+        print("humidity on")
 
     # print the temp
-    display = SevenSegment.SevenSegment()
-    display.begin()
-    display.clear()
-    time.sleep(1.0)				
-    display.print_float(temperature)
-    display.write_display()
-    
+    try:
+        display = SevenSegment.SevenSegment()
+        display.begin()
+        display.clear()
+        time.sleep(1.0)				
+        display.print_float(temperature)
+        display.write_display()
+    except:
+        print("display write error")
+
     # print a status
     print temperature
-    
+    print x
     # write to adafruit
-    aio.send('fridge_temp',temperature)
-    aio.send('fridge_humidity',humidity)
-    aio.send('fridge_on', fridgeON)
-    aio.send('humidity_on',humidityON)
-    # sleep for a bit 
-    time.sleep(10)
+    try:
+        aio.send('fridge_temp',temperature)
+        aio.send('fridge_humidity',humidity)
+        aio.send('fridge_on', fridgeON)
+        aio.send('humidity_on',humidityON)
+    except:
+       print("adafruit send error")
+   # sleep for a bit 
+    time.sleep(30)
     
-
+#all this below is useless.
 
 # Note that sometimes you won't get a reading and
 # the results will be null (because Linux can't
